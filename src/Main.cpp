@@ -1,6 +1,6 @@
 #include "CaptureVideo.h"
 #include "CaptureAudio.h"
-#include "resource.h"
+#include "../res/resource.h"
 #define ID_COMBOBOX  10000
 #define ID_COMBOBOX2 10001
 #define ID_TIMER     10002
@@ -95,9 +95,12 @@ INT_PTR CALLBACK WndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				Msg(hDlg,TEXT("没有摄像头设备"));
 				EnableWindow(GetDlgItem(hDlg,IDC_PREVIWE),FALSE);
+                EnableWindow(GetDlgItem(hDlg, IDC_RECONNECT), FALSE);
 			}
 			EnableWindow(GetDlgItem(hDlg,IDONESHOT),FALSE);
-
+			EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_MSG), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_STOP), FALSE);
+#if 0
 			// Audio
 			g_CaptureAudio.EnumAllDevices(hwndCombo2);
 			nGetComboxCount = ComboBox_GetCount(hwndCombo2);
@@ -110,6 +113,7 @@ INT_PTR CALLBACK WndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				Msg(hDlg,TEXT("没有音频设备"));
 				EnableWindow(GetDlgItem(hDlg,IDC_PREVIWE),FALSE);
 			}
+#endif
         }
 		return TRUE;
 	case WM_DESTROY:
@@ -118,6 +122,9 @@ INT_PTR CALLBACK WndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			PostQuitMessage(0);
         }
 		break;
+    case WM_CLOSE:
+        PostQuitMessage(0);
+        break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
@@ -132,24 +139,51 @@ INT_PTR CALLBACK WndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				SetTimer(hDlg,ID_TIMER,150, TimerGetPicture);
             }
 			break;
+
+		case IDC_BUTTON_MSG:
+			g_CaptureVideo.TestMsg();
+			break;
 		
 		case IDC_PREVIWE:
 			{
 				//Video
 				iGetCurSel = ComboBox_GetCurSel(hwndCombo1);
-				g_CaptureVideo.OpenDevice(iGetCurSel,20,30,430,400);
+				g_CaptureVideo.OpenDevice(iGetCurSel,20,50,640,360);
 				EnableWindow(GetDlgItem(hDlg,IDONESHOT),TRUE);
-
+				EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_MSG), TRUE);
+                EnableWindow(GetDlgItem(hDlg, IDC_STOP), TRUE);
+                EnableWindow(GetDlgItem(hDlg, IDC_RECONNECT), FALSE);
+#if 0
 				//Audio
 				iGetCurSel = ComboBox_GetCurSel(hwndCombo2);
 				bstrDeviceName = SysAllocString(g_CaptureAudio.m_pCapDeviceName[iGetCurSel]);
 				g_CaptureAudio.OpenDevice(bstrDeviceName);
+#endif
 			}
 			break;
+        case IDC_STOP:
+            {
+                EnableWindow(GetDlgItem(hDlg, IDONESHOT), FALSE);
+                EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_MSG), FALSE);
+                g_CaptureVideo.CloseInterface();
+                EnableWindow(GetDlgItem(hDlg, IDC_RECONNECT), TRUE);
+            }
+            break;
+        case IDC_RECONNECT:
+            {
+                g_CaptureVideo.RestartDevice();
+                EnableWindow(GetDlgItem(hDlg, IDONESHOT), FALSE);
+                EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_MSG), FALSE);
+                EnableWindow(GetDlgItem(hDlg, IDC_STOP), FALSE);
+            }
+            break;
 		default: break;
 		}
 	case WM_MOVE:
-		g_CaptureVideo.m_pVideoWindow->NotifyOwnerMessage((OAHWND)hDlg, message, wParam, lParam);
+        if (g_CaptureVideo.m_pVideoWindow)
+        {
+            g_CaptureVideo.m_pVideoWindow->NotifyOwnerMessage((OAHWND)hDlg, message, wParam, lParam);
+        }
 		break;
 	}
 	return (FALSE);
@@ -157,7 +191,7 @@ INT_PTR CALLBACK WndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 VOID CALLBACK TimerGetPicture(HWND hDlg, UINT message, UINT_PTR iTimerID, DWORD dwTimer)
 {
-	if(g_nTimerCount < 25)
+	if(g_nTimerCount < 1)
 	{
 		g_CaptureVideo.GrabOneFrame(TRUE);
 		g_nTimerCount++;

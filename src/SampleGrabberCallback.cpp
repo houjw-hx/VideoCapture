@@ -57,6 +57,7 @@ HRESULT STDMETHODCALLTYPE SampleGrabberCallback::BufferCB(double Time, BYTE *pBu
 
 BOOL SampleGrabberCallback::SaveBitmap(BYTE * pBuffer, long lBufferSize )
 {
+#if 0
 	SYSTEMTIME sysTime;
 	GetLocalTime(&sysTime);
 	StringCchCopy(m_chSwapStr,MAX_PATH,m_chTempPath);
@@ -65,7 +66,7 @@ BOOL SampleGrabberCallback::SaveBitmap(BYTE * pBuffer, long lBufferSize )
 					sysTime.wMinute,sysTime.wSecond,sysTime.wMilliseconds);
 	StringCchCat(m_chSwapStr,MAX_PATH,m_chDirName);
 	// %temp%/CaptureBmp/*
-	//MessageBox(NULL,chTempPath,TEXT("Message"),MB_OK);
+	//MessageBox(NULL, m_chSwapStr,TEXT("Message"),MB_OK);
 	//create picture file
 	HANDLE hf = CreateFile(m_chSwapStr,GENERIC_WRITE,FILE_SHARE_WRITE,NULL,
 		CREATE_ALWAYS,0,NULL);
@@ -124,6 +125,26 @@ BOOL SampleGrabberCallback::SaveBitmap(BYTE * pBuffer, long lBufferSize )
 
 	memcpy(szDstFileName + len - 3, "png", 3);
 	bRet = ifc.ToPng(szSrcFileName, szDstFileName);
+#else
+	SYSTEMTIME sysTime;
+	GetLocalTime(&sysTime);
+	StringCchPrintf(m_chDirName, MAX_PATH, TEXT("%04i%02i%02i%02i%02i%02i%03ione.raw"),
+		sysTime.wYear, sysTime.wMonth, sysTime.wDay, sysTime.wHour,
+		sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds);
+	// %temp%/CaptureBmp/*
+	//MessageBox(NULL, m_chDirName,TEXT("Message"),MB_OK);
+	//create picture file
+	HANDLE hf = CreateFile(m_chDirName, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
+		CREATE_ALWAYS, 0, NULL);
+	if (hf == INVALID_HANDLE_VALUE)
+	{
+		return FALSE;
+	}
 
+	DWORD dwWritten = 0;
+	//Write the file Data
+	WriteFile(hf, pBuffer, lBufferSize, &dwWritten, NULL);
+	CloseHandle(hf);
+#endif
 	return TRUE;
 }

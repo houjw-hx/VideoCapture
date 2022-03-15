@@ -17,6 +17,7 @@
 // Application-defined message to notify app of filter graph events
 #define WM_GRAPHNOTIFY  WM_APP+100
 
+void logout(const char *fmt, ...);
 void Msg(HWND hwnd,TCHAR *szFormat, ...);
 bool Bstr_Compare(BSTR bstrFilter,BSTR bstrDevice);
 

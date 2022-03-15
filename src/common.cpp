@@ -1,5 +1,17 @@
 #include "common.h"
 
+void logout(const char *fmt, ...)
+{
+	FILE *fp;
+	va_list carg;
+
+	fp = fopen("err.log", "a");
+	va_start(carg, fmt);
+	vfprintf(fp, fmt, carg);
+	va_end(carg);
+	fclose(fp);
+}
+
 void Msg(HWND hwnd,TCHAR *szFormat, ...)
 {
 	TCHAR szBuffer[1024];  
